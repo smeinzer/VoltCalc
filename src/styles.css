@@ -1,0 +1,231 @@
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:            #0F0F14;
+  --surface:       #1A1A24;
+  --surface-hi:    #24243A;
+  --primary:       #4A9EFF;
+  --text:          #EAEAF0;
+  --text-muted:    #8888A0;
+  --input-bg:      #14141E;
+  --input-border:  #2A2A3E;
+  --divider:       #2A2A3E;
+  --good:          #34D399;
+  --warn:          #FBBF24;
+  --fail:          #F87171;
+  --radius-sm:     8px;
+  --radius-md:     12px;
+  --radius-lg:     16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Layout ── */
+.app {
+  min-height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: env(safe-area-inset-top, 16px) 24px env(safe-area-inset-bottom, 24px);
+}
+
+/* ── Header ── */
+.header { margin-bottom: 28px; padding-top: 16px; }
+.header-title {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.header-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Input group ── */
+.input-group { margin-bottom: 16px; }
+.input-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  height: 52px;
+  padding: 0 16px;
+  transition: border-color 0.15s;
+}
+.input-wrap:focus-within { border-color: var(--primary); }
+.input-wrap input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 17px;
+  font-family: inherit;
+  min-width: 0;
+}
+.input-wrap input::placeholder { color: var(--text-muted); }
+.input-unit {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.input-help {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* ── Voltage toggle ── */
+.volt-toggle {
+  display: flex;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  height: 52px;
+}
+.volt-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-radius: calc(var(--radius-md) - 2px);
+  margin: 2px;
+}
+.volt-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ── Wire gauge select ── */
+.gauge-select {
+  width: 100%;
+  height: 52px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 17px;
+  font-family: inherit;
+  padding: 0 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888A0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.gauge-select:focus { border-color: var(--primary); }
+.gauge-select option { background: var(--surface); color: var(--text); }
+
+/* ── Results card ── */
+.results-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-top: 24px;
+}
+.results-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+.results-divider {
+  height: 1px;
+  background: var(--divider);
+  margin: 16px 0;
+}
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+}
+.result-label { font-size: 15px; color: var(--text-muted); }
+.result-value-wrap { display: flex; align-items: baseline; gap: 4px; }
+.result-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.result-unit { font-size: 14px; color: var(--text-muted); }
+
+/* ── Status badge ── */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-top: 16px;
+}
+.status-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.status-text { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+
+.status-badge.good  { background: rgba(52,211,153,.12); }
+.status-badge.warn  { background: rgba(251,191,36,.12); }
+.status-badge.fail  { background: rgba(248,113,113,.12); }
+
+.status-badge.good  .status-icon { background: var(--good); }
+.status-badge.warn  .status-icon { background: var(--warn); }
+.status-badge.fail  .status-icon { background: var(--fail); }
+
+.status-badge.good  .status-text { color: var(--good); }
+.status-badge.warn  .status-text { color: var(--warn); }
+.status-badge.fail  .status-text { color: var(--fail); }
+
+.recommendation {
+  font-size: 13px;
+  color: var(--warn);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+/* ── Footer ── */
+.footer {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 32px;
+  padding-bottom: 16px;
+  opacity: 0.6;
+  line-height: 1.5;
+}
