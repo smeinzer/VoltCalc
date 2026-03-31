@@ -7,8 +7,8 @@ function SystemVoltageToggle({
   value,
   onChange,
 }: {
-  value: 12 | 24
-  onChange: (v: 12 | 24) => void
+  value: 12 | 24 | 120
+  onChange: (v: 12 | 24 | 120) => void
 }) {
   return (
     <div className="input-group">
@@ -27,6 +27,13 @@ function SystemVoltageToggle({
           type="button"
         >
           24V
+        </button>
+        <button
+          className={`volt-btn${value === 120 ? ' active' : ''}`}
+          onClick={() => onChange(120)}
+          type="button"
+        >
+          120V
         </button>
       </div>
     </div>
@@ -182,7 +189,7 @@ function ResultsCard({ result }: { result: VoltageDropResult | null }) {
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [systemVoltage, setSystemVoltage] = useState<12 | 24>(12)
+  const [systemVoltage, setSystemVoltage] = useState<12 | 24 | 120>(12)
   const [wireGauge, setWireGauge] = useState(DEFAULT_WIRE_GAUGE)
   const [wireLength, setWireLength] = useState('')
   const [current, setCurrent] = useState('')
