@@ -49,6 +49,18 @@ html, body, #root {
   margin-top: 4px;
 }
 
+/* ── Info box ── */
+.info-box {
+  background: rgba(74,158,255,.08);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
 /* ── Input group ── */
 .input-group { margin-bottom: 16px; }
 .input-label {
@@ -166,7 +178,8 @@ html, body, #root {
   align-items: baseline;
   padding: 8px 0;
 }
-.result-label { font-size: 15px; color: var(--text-muted); }
+.result-label { font-size: 15px; color: var(--text-muted); display: block; }
+.result-sublabel { font-size: 11px; color: var(--text-muted); opacity: 0.7; display: block; margin-top: 1px; }
 .result-value-wrap { display: flex; align-items: baseline; gap: 4px; }
 .result-value {
   font-size: 26px;
@@ -212,6 +225,12 @@ html, body, #root {
 .status-badge.warn  .status-text { color: var(--warn); }
 .status-badge.fail  .status-text { color: var(--fail); }
 
+.status-explain {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.5;
+}
 .recommendation {
   font-size: 13px;
   color: var(--warn);
@@ -260,6 +279,14 @@ html, body, #root {
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: block;
+}
+.segment-subtitle {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 2px;
 }
 .segment-remove {
   background: none;
