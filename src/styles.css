@@ -219,6 +219,106 @@ html, body, #root {
   line-height: 1.5;
 }
 
+/* ── Section header with pigtail button ── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.section-header .input-label { margin-bottom: 0; }
+.pigtail-btn {
+  background: none;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pigtail-btn:active { background: rgba(74,158,255,.15); }
+
+/* ── Segment cards ── */
+.segment-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.segment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.segment-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.segment-remove {
+  background: none;
+  border: none;
+  color: var(--fail);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.segment-fields { display: flex; flex-direction: column; gap: 0; }
+.segment-field .input-group { margin-bottom: 8px; }
+.segment-field .gauge-select { height: 46px; font-size: 15px; }
+.segment-field .input-wrap { height: 46px; }
+.segment-field .input-label { font-size: 13px; color: var(--text-muted); }
+
+.add-segment-btn {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1.5px dashed var(--input-border);
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.add-segment-btn:active { border-color: var(--primary); color: var(--primary); }
+
+/* ── Segment breakdown in results ── */
+.segment-breakdown-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.segment-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+.segment-breakdown-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.segment-breakdown-value {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Footer ── */
 .footer {
   font-size: 11px;

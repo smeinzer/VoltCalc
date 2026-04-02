@@ -1,6 +1,14 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { WIRE_DATA, DEFAULT_WIRE_GAUGE } from './constants/wireData'
-import { calculateVoltageDrop, VoltageDropResult, VoltageDropStatus } from './utils/voltageDropCalculator'
+import { calculateMultiSegmentVoltageDrop, VoltageDropResult, VoltageDropStatus, WireSegment } from './utils/voltageDropCalculator'
+
+interface SegmentState {
+  id: number;
+  gauge: string;
+  length: string;
+}
+
+let nextId = 1;
 
 // ── SystemVoltageToggle ────────────────────────────────────────────────────────
 function SystemVoltageToggle({
@@ -14,57 +22,17 @@ function SystemVoltageToggle({
     <div className="input-group">
       <span className="input-label">System Voltage</span>
       <div className="volt-toggle">
-        <button
-          className={`volt-btn${value === 12 ? ' active' : ''}`}
-          onClick={() => onChange(12)}
-          type="button"
-        >
-          12V
-        </button>
-        <button
-          className={`volt-btn${value === 24 ? ' active' : ''}`}
-          onClick={() => onChange(24)}
-          type="button"
-        >
-          24V
-        </button>
-        <button
-          className={`volt-btn${value === 120 ? ' active' : ''}`}
-          onClick={() => onChange(120)}
-          type="button"
-        >
-          120V
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ── WireGaugeSelect ───────────────────────────────────────────────────────────
-function WireGaugeSelect({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div className="input-group">
-      <label className="input-label" htmlFor="wire-gauge">
-        Wire Gauge
-      </label>
-      <select
-        id="wire-gauge"
-        className="gauge-select"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {WIRE_DATA.map((wire) => (
-          <option key={wire.awg} value={wire.awg}>
-            {wire.label} — {wire.maxAmps}A max
-          </option>
+        {([12, 24, 120] as const).map((v) => (
+          <button
+            key={v}
+            className={`volt-btn${value === v ? ' active' : ''}`}
+            onClick={() => onChange(v)}
+            type="button"
+          >
+            {v}V
+          </button>
         ))}
-      </select>
+      </div>
     </div>
   )
 }
@@ -78,16 +46,14 @@ function NumericInput({
   placeholder,
   unit,
   helpText,
-  inputRef,
 }: {
   id: string
-  label: string
+  label?: string
   value: string
   onChange: (v: string) => void
   placeholder: string
   unit: string
   helpText?: string
-  inputRef?: React.RefObject<HTMLInputElement | null>
 }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value
@@ -98,13 +64,14 @@ function NumericInput({
 
   return (
     <div className="input-group">
-      <label className="input-label" htmlFor={id}>
-        {label}
-      </label>
+      {label && (
+        <label className="input-label" htmlFor={id}>
+          {label}
+        </label>
+      )}
       <div className="input-wrap">
         <input
           id={id}
-          ref={inputRef as React.RefObject<HTMLInputElement>}
           type="text"
           inputMode="decimal"
           value={value}
@@ -115,6 +82,68 @@ function NumericInput({
         <span className="input-unit">{unit}</span>
       </div>
       {helpText && <p className="input-help">{helpText}</p>}
+    </div>
+  )
+}
+
+// ── SegmentCard ──────────────────────────────────────────────────────────────
+function SegmentCard({
+  segment,
+  index,
+  canRemove,
+  onUpdate,
+  onRemove,
+}: {
+  segment: SegmentState
+  index: number
+  canRemove: boolean
+  onUpdate: (id: number, field: 'gauge' | 'length', value: string) => void
+  onRemove: (id: number) => void
+}) {
+  return (
+    <div className="segment-card">
+      <div className="segment-header">
+        <span className="segment-title">Segment {index + 1}</span>
+        {canRemove && (
+          <button
+            className="segment-remove"
+            onClick={() => onRemove(segment.id)}
+            type="button"
+            aria-label="Remove segment"
+          >
+            Remove
+          </button>
+        )}
+      </div>
+      <div className="segment-fields">
+        <div className="segment-field">
+          <label className="input-label" htmlFor={`gauge-${segment.id}`}>
+            Wire Gauge
+          </label>
+          <select
+            id={`gauge-${segment.id}`}
+            className="gauge-select"
+            value={segment.gauge}
+            onChange={(e) => onUpdate(segment.id, 'gauge', e.target.value)}
+          >
+            {WIRE_DATA.map((wire) => (
+              <option key={wire.awg} value={wire.awg}>
+                {wire.label} — {wire.maxAmps}A max
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="segment-field">
+          <NumericInput
+            id={`length-${segment.id}`}
+            label="Length"
+            value={segment.length}
+            onChange={(v) => onUpdate(segment.id, 'length', v)}
+            placeholder="ft"
+            unit="ft"
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -137,7 +166,7 @@ function StatusBadge({ status }: { status: VoltageDropStatus }) {
 }
 
 // ── ResultsCard ───────────────────────────────────────────────────────────────
-function ResultsCard({ result }: { result: VoltageDropResult | null }) {
+function ResultsCard({ result, multiSegment }: { result: VoltageDropResult | null; multiSegment: boolean }) {
   const empty = !result
 
   return (
@@ -145,8 +174,26 @@ function ResultsCard({ result }: { result: VoltageDropResult | null }) {
       <div className="results-title">Results</div>
       <div className="results-divider" />
 
+      {/* Per-segment breakdown when pigtailing */}
+      {result && multiSegment && result.segments.length > 1 && (
+        <>
+          <div className="segment-breakdown-title">Per-Segment Breakdown</div>
+          {result.segments.map((seg, i) => (
+            <div key={i} className="segment-breakdown-row">
+              <span className="segment-breakdown-label">
+                Seg {i + 1}: {seg.label}, {seg.lengthFeet} ft
+              </span>
+              <span className="segment-breakdown-value">
+                {seg.voltageDrop.toFixed(3)} V ({seg.voltageDropPercent.toFixed(2)}%)
+              </span>
+            </div>
+          ))}
+          <div className="results-divider" />
+        </>
+      )}
+
       <div className="result-row">
-        <span className="result-label">Voltage Drop</span>
+        <span className="result-label">{multiSegment ? 'Total ' : ''}Voltage Drop</span>
         <div className="result-value-wrap">
           <span className="result-value">
             {empty ? '—' : result.voltageDrop.toFixed(3)}
@@ -190,42 +237,120 @@ function ResultsCard({ result }: { result: VoltageDropResult | null }) {
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [systemVoltage, setSystemVoltage] = useState<12 | 24 | 120>(12)
-  const [wireGauge, setWireGauge] = useState(DEFAULT_WIRE_GAUGE)
-  const [wireLength, setWireLength] = useState('')
+  const [segments, setSegments] = useState<SegmentState[]>([
+    { id: nextId++, gauge: DEFAULT_WIRE_GAUGE, length: '' },
+  ])
   const [current, setCurrent] = useState('')
+  const [multiSegment, setMultiSegment] = useState(false)
 
-  const currentRef = useRef<HTMLInputElement>(null)
+  const addSegment = useCallback(() => {
+    setMultiSegment(true)
+    setSegments((prev) => {
+      const lastGauge = prev[prev.length - 1]?.gauge ?? DEFAULT_WIRE_GAUGE
+      // Default the new segment to one gauge smaller (thinner) for a typical pigtail
+      const lastIdx = WIRE_DATA.findIndex((w) => w.awg === lastGauge)
+      const smallerIdx = Math.max(0, lastIdx - 1)
+      return [...prev, { id: nextId++, gauge: WIRE_DATA[smallerIdx].awg, length: '' }]
+    })
+  }, [])
+
+  const removeSegment = useCallback((id: number) => {
+    setSegments((prev) => {
+      const next = prev.filter((s) => s.id !== id)
+      if (next.length <= 1) setMultiSegment(false)
+      return next
+    })
+  }, [])
+
+  const updateSegment = useCallback((id: number, field: 'gauge' | 'length', value: string) => {
+    setSegments((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    )
+  }, [])
 
   const result = useMemo(() => {
-    const len = parseFloat(wireLength)
     const amps = parseFloat(current)
-    if (isNaN(len) || isNaN(amps) || len <= 0 || amps <= 0) return null
-    return calculateVoltageDrop({
+    if (isNaN(amps) || amps <= 0) return null
+
+    const wireSegments: WireSegment[] = []
+    for (const seg of segments) {
+      const len = parseFloat(seg.length)
+      if (isNaN(len) || len <= 0) return null
+      wireSegments.push({ wireGaugeAwg: seg.gauge, lengthFeet: len })
+    }
+
+    return calculateMultiSegmentVoltageDrop({
       systemVoltage,
-      wireGaugeAwg: wireGauge,
-      wireLengthFeet: len,
+      segments: wireSegments,
       currentAmps: amps,
     })
-  }, [systemVoltage, wireGauge, wireLength, current])
+  }, [systemVoltage, segments, current])
 
   return (
     <div className="app">
       <header className="header">
-        <div className="header-title">⚡ VoltCalc</div>
+        <div className="header-title">VoltCalc</div>
         <div className="header-subtitle">Van Build Voltage Drop Calculator</div>
       </header>
 
       <SystemVoltageToggle value={systemVoltage} onChange={setSystemVoltage} />
-      <WireGaugeSelect value={wireGauge} onChange={setWireGauge} />
-      <NumericInput
-        id="wire-length"
-        label="One-Way Wire Length"
-        value={wireLength}
-        onChange={setWireLength}
-        placeholder="e.g. 15"
-        unit="ft"
-        helpText="Distance from battery/fuse box to device. Return path is calculated automatically."
-      />
+
+      <div className="section-header">
+        <span className="input-label">Wire Run</span>
+        {!multiSegment && (
+          <button className="pigtail-btn" onClick={addSegment} type="button">
+            + Add Pigtail
+          </button>
+        )}
+      </div>
+
+      {!multiSegment ? (
+        <>
+          <div className="input-group">
+            <select
+              id="wire-gauge"
+              className="gauge-select"
+              value={segments[0].gauge}
+              onChange={(e) => updateSegment(segments[0].id, 'gauge', e.target.value)}
+            >
+              {WIRE_DATA.map((wire) => (
+                <option key={wire.awg} value={wire.awg}>
+                  {wire.label} — {wire.maxAmps}A max
+                </option>
+              ))}
+            </select>
+          </div>
+          <NumericInput
+            id="wire-length"
+            label="One-Way Wire Length"
+            value={segments[0].length}
+            onChange={(v) => updateSegment(segments[0].id, 'length', v)}
+            placeholder="e.g. 15"
+            unit="ft"
+            helpText="Distance from battery/fuse box to device. Return path is calculated automatically."
+          />
+        </>
+      ) : (
+        <>
+          <p className="input-help" style={{ marginBottom: 12 }}>
+            Define each wire segment from source to load. The calculator sums the voltage drop across all segments.
+          </p>
+          {segments.map((seg, i) => (
+            <SegmentCard
+              key={seg.id}
+              segment={seg}
+              index={i}
+              canRemove={segments.length > 1}
+              onUpdate={updateSegment}
+              onRemove={removeSegment}
+            />
+          ))}
+          <button className="add-segment-btn" onClick={addSegment} type="button">
+            + Add Segment
+          </button>
+        </>
+      )}
+
       <NumericInput
         id="current"
         label="Current Draw"
@@ -233,10 +358,9 @@ export default function App() {
         onChange={setCurrent}
         placeholder="e.g. 10"
         unit="A"
-        inputRef={currentRef}
       />
 
-      <ResultsCard result={result} />
+      <ResultsCard result={result} multiSegment={multiSegment} />
 
       <p className="footer">
         For reference only. Always consult a qualified electrician and follow
